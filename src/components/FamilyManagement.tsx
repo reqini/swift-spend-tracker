@@ -48,6 +48,7 @@ const FamilyManagement = ({
   onNotificationDelete
 }: FamilyManagementProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [createFamilyName, setCreateFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [showInviteCode, setShowInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,15 +56,16 @@ const FamilyManagement = ({
 
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!familyName?.trim()) return;
+    if (!createFamilyName?.trim()) return;
 
     setLoading(true);
-    const result = await onCreateFamily(familyName.trim());
+    const result = await onCreateFamily(createFamilyName.trim());
     if (result) {
+      setCreateFamilyName('');
       setIsOpen(false);
       toast({
         title: "Familia creada",
-        description: `La familia "${familyName}" fue creada exitosamente`,
+        description: `La familia "${createFamilyName}" fue creada exitosamente`,
       });
     }
     setLoading(false);
@@ -218,8 +220,8 @@ const FamilyManagement = ({
                     <Label htmlFor="familyName">Nombre de la Familia</Label>
                     <Input
                       id="familyName"
-                      value={familyName}
-                      onChange={(e) => setFamilyName(e.target.value)}
+                      value={createFamilyName}
+                      onChange={(e) => setCreateFamilyName(e.target.value)}
                       placeholder="Ej: Familia García"
                       required
                     />

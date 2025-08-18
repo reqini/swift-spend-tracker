@@ -69,6 +69,9 @@ const AuthForm = () => {
     }
   };
 
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+
   const handleForgotPassword = async () => {
     if (!email) {
       setError('Por favor ingresa tu email para recuperar la contraseña');
@@ -80,7 +83,7 @@ const AuthForm = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${window.location.origin}/?reset=true`,
       });
 
       if (error) throw error;
@@ -89,6 +92,37 @@ const AuthForm = () => {
         title: "Email enviado",
         description: "Revisa tu email para restablecer tu contraseña",
       });
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Contraseña actualizada",
+        description: "Tu contraseña ha sido actualizada correctamente",
+      });
+      
+      setNewPassword('');
+      setShowResetForm(false);
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -114,11 +148,48 @@ const AuthForm = () => {
             <CardTitle>Acceder a tu cuenta</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="signup">Registrarse</TabsTrigger>
-              </TabsList>
+            {showResetForm ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">Restablecer Contraseña</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Ingresa tu nueva contraseña
+                  </p>
+                </div>
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setShowResetForm(false)}
+                      className="flex-1"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={loading}>
+                      Actualizar Contraseña
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <Tabs defaultValue="signin" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
+                  <TabsTrigger value="signup">Registrarse</TabsTrigger>
+                </TabsList>
               
               {error && (
                 <Alert variant="destructive" className="mt-4">
@@ -157,7 +228,7 @@ const AuthForm = () => {
                   <Button 
                     type="button" 
                     variant="link" 
-                    onClick={handleForgotPassword}
+                    onClick={() => setShowResetForm(true)}
                     disabled={loading || !email}
                     className="text-sm"
                   >
@@ -198,6 +269,7 @@ const AuthForm = () => {
                 </form>
               </TabsContent>
             </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>

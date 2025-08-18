@@ -138,7 +138,10 @@ export const useSupabaseFinance = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading transactions:', error);
+        throw error;
+      }
       
       const formattedTransactions = data?.map(t => ({
         id: t.id,
@@ -151,9 +154,10 @@ export const useSupabaseFinance = () => {
 
       setTransactions(formattedTransactions);
     } catch (error: any) {
+      console.error('Error in loadTransactions:', error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error al cargar transacciones",
+        description: error.message || "No se pudieron cargar las transacciones",
         variant: "destructive"
       });
     } finally {
@@ -165,6 +169,8 @@ export const useSupabaseFinance = () => {
     if (!user) return null;
 
     try {
+      console.log('Adding transaction:', transaction);
+      
       const { data, error } = await supabase
         .from('transactions')
         .insert({
@@ -179,7 +185,10 @@ export const useSupabaseFinance = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding transaction:', error);
+        throw error;
+      }
 
       const newTransaction = {
         id: data.id,
@@ -193,9 +202,10 @@ export const useSupabaseFinance = () => {
       setTransactions(prev => [newTransaction, ...prev]);
       return newTransaction;
     } catch (error: any) {
+      console.error('Error in addTransaction:', error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error al agregar transacción",
+        description: error.message || "No se pudo agregar la transacción",
         variant: "destructive"
       });
       return null;
@@ -255,6 +265,8 @@ export const useSupabaseFinance = () => {
     if (!user) return null;
 
     try {
+      console.log('Creating family:', name);
+      
       const { data: family, error: familyError } = await supabase
         .from('families')
         .insert({
@@ -264,7 +276,10 @@ export const useSupabaseFinance = () => {
         .select()
         .single();
 
-      if (familyError) throw familyError;
+      if (familyError) {
+        console.error('Error creating family:', familyError);
+        throw familyError;
+      }
 
       const { error: memberError } = await supabase
         .from('family_members')
@@ -274,7 +289,10 @@ export const useSupabaseFinance = () => {
           role: 'admin'
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error adding user to family:', memberError);
+        throw memberError;
+      }
 
       setFamilyId(family.id);
       
@@ -288,9 +306,10 @@ export const useSupabaseFinance = () => {
 
       return family;
     } catch (error: any) {
+      console.error('Error in createFamily:', error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error al crear familia",
+        description: error.message || "No se pudo crear la familia",
         variant: "destructive"
       });
       return null;

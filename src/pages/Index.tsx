@@ -21,6 +21,15 @@ const Index = () => {
 
   useEffect(() => {
     registerServiceWorker();
+    
+    // Handle URL parameters for expense addition from notifications
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'add-expense') {
+      setShowExpenseModal(true);
+      setDetectedText('Gasto detectado desde notificación');
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const monthBalance = getCurrentMonthBalance();

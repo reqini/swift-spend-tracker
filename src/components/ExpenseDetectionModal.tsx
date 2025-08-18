@@ -1,3 +1,8 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,9 +13,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
 
 interface ExpenseDetectionModalProps {
   isOpen: boolean;
@@ -25,64 +27,69 @@ const ExpenseDetectionModal = ({
   onCancel, 
   detectedText 
 }: ExpenseDetectionModalProps) => {
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleConfirm = () => {
-    if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
-      onConfirm(Number(amount), description);
-      setAmount('');
-      setDescription('');
+    const numAmount = parseFloat(amount);
+    if (numAmount && numAmount > 0) {
+      onConfirm(numAmount, description);
+      setAmount("");
+      setDescription("");
     }
   };
 
+  const isValidAmount = amount && parseFloat(amount) > 0;
+
   return (
-    <AlertDialog open={isOpen}>
-      <AlertDialogContent>
+    <AlertDialog open={isOpen} onOpenChange={onCancel}>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Registrar este movimiento como gasto?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Se detectó una posible transacción: <br />
-            <code className="bg-muted p-1 rounded text-sm">{detectedText}</code>
+          <AlertDialogTitle>💳 Posible Gasto Detectado</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-3">
+            <p>Se detectó el siguiente texto que podría ser un gasto:</p>
+            <div className="bg-muted p-3 rounded-md font-mono text-sm">
+              {detectedText}
+            </div>
+            <p>¿Deseas registrar este movimiento como gasto?</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         
-        <div className="space-y-4 my-4">
-          <div>
-            <Label htmlFor="detected-amount">Monto del gasto</Label>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="amount">Monto del gasto *</Label>
             <Input
-              id="detected-amount"
+              id="amount"
               type="number"
+              placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Ingrese el monto"
-              required
-              min="0"
-              step="0.01"
+              className="text-lg"
             />
           </div>
           
-          <div>
-            <Label htmlFor="detected-description">Descripción (opcional)</Label>
-            <Input
-              id="detected-description"
+          <div className="space-y-2">
+            <Label htmlFor="description">Descripción (opcional)</Label>
+            <Textarea
+              id="description"
+              placeholder="Descripción del gasto..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ej: Transferencia, Pago con tarjeta"
+              rows={2}
             />
           </div>
         </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>
-            No, cancelar
+            Cancelar
           </AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleConfirm}
-            disabled={!amount || isNaN(Number(amount)) || Number(amount) <= 0}
-            className="bg-expense hover:bg-expense/90"
+            disabled={!isValidAmount}
+            className="bg-destructive hover:bg-destructive/90"
           >
-            Sí, es un gasto
+            Registrar Gasto
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

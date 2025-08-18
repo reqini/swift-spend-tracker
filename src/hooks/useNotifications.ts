@@ -62,11 +62,17 @@ export const useNotifications = () => {
 
   const scheduleExpenseDetection = () => {
     // Simulate expense detection every 30 seconds for demo
-    setInterval(() => {
-      if (Math.random() > 0.7) { // 30% chance
-        showNotification('Posible Gasto Detectado');
+    const interval = setInterval(() => {
+      if (Math.random() > 0.8) { // 20% chance for demo
+        showNotification('Posible Gasto Detectado', {
+          body: '¿Registrar este movimiento como gasto?',
+          tag: 'expense-detection',
+          requireInteraction: true
+        });
       }
     }, 30000);
+    
+    return () => clearInterval(interval);
   };
 
   return {

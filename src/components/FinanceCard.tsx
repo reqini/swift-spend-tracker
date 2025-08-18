@@ -27,20 +27,20 @@ const FinanceCard = ({ title, amount, type, className }: FinanceCardProps) => {
   };
 
   const getCardVariant = () => {
-    if (type === 'income') return 'bg-gradient-to-br from-income/10 to-income/5 border-income/20';
-    if (type === 'expense') return 'bg-gradient-to-br from-expense/10 to-expense/5 border-expense/20';
-    return 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20';
+    if (type === 'income') return 'bg-gradient-to-br from-income/20 to-income/10 border-income/30 shadow-sm';
+    if (type === 'expense') return 'bg-gradient-to-br from-expense/20 to-expense/10 border-expense/30 shadow-sm';
+    return 'bg-gradient-to-br from-primary/20 to-primary/10 border-primary/30 shadow-sm';
   };
 
   return (
-    <Card className={cn(getCardVariant(), "shadow-sm", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card className={cn(getCardVariant(), className)}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className={cn("text-2xl font-bold", getAmountColor())}>
+      <CardContent className="pt-0">
+        <div className={cn("text-3xl font-bold", getAmountColor())}>
           {formatAmount(amount)}
         </div>
       </CardContent>

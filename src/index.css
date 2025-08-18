@@ -8,42 +8,42 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 248 250 252;
-    --foreground: 226 232 240;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 255 255 255;
-    --card-foreground: 15 23 42;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 255 255 255;
-    --popover-foreground: 15 23 42;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 219 234 254;
-    --primary-foreground: 30 58 138;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 241 245 249;
-    --secondary-foreground: 51 65 85;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
 
-    --muted: 248 250 252;
-    --muted-foreground: 100 116 139;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 219 234 254;
-    --accent-foreground: 30 58 138;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
 
-    --destructive: 239 68 68;
-    --destructive-foreground: 254 242 242;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 226 232 240;
-    --input: 241 245 249;
-    --ring: 59 130 246;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
 
     /* Financial app specific colors */
-    --income: 34 197 94;
-    --income-foreground: 255 255 255;
-    --expense: 239 68 68;
-    --expense-foreground: 255 255 255;
-    --balance-positive: 34 197 94;
-    --balance-negative: 239 68 68;
-    --balance-neutral: 100 116 139;
+    --income: 142.1 76.2% 36.3%;
+    --income-foreground: 355.7 100% 97.3%;
+    --expense: 0 84.2% 60.2%;
+    --expense-foreground: 210 40% 98%;
+    --balance-positive: 142.1 76.2% 36.3%;
+    --balance-negative: 0 84.2% 60.2%;
+    --balance-neutral: 215.4 16.3% 46.9%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(219 234 254) 0%, hsl(191 219 254) 100%);
@@ -70,38 +70,38 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 15 23 42;
-    --foreground: 248 250 252;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 30 41 59;
-    --card-foreground: 248 250 252;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 30 41 59;
-    --popover-foreground: 248 250 252;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 30 58 138;
-    --primary-foreground: 219 234 254;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
 
-    --secondary: 51 65 85;
-    --secondary-foreground: 226 232 240;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 51 65 85;
-    --muted-foreground: 148 163 184;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 30 58 138;
-    --accent-foreground: 219 234 254;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 220 38 57;
-    --destructive-foreground: 254 242 242;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
     /* Financial app specific colors - dark mode */
-    --income: 22 163 74;
-    --income-foreground: 255 255 255;
-    --expense: 220 38 57;
-    --expense-foreground: 255 255 255;
-    --balance-positive: 22 163 74;
-    --balance-negative: 220 38 57;
-    --balance-neutral: 148 163 184;
+    --income: 142.1 70.6% 45.3%;
+    --income-foreground: 144.9 80.4% 10%;
+    --expense: 0 62.8% 30.6%;
+    --expense-foreground: 210 40% 98%;
+    --balance-positive: 142.1 70.6% 45.3%;
+    --balance-negative: 0 62.8% 30.6%;
+    --balance-neutral: 215 20.2% 65.1%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;

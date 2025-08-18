@@ -76,11 +76,11 @@ const Index = () => {
 
   const renderDashboard = () => (
     <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-2">
-          Mis Finanzas Rápidas
+      <div className="text-center mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-3">
+          💰 Mis Finanzas Rápidas
         </h1>
-        <p className="text-muted-foreground capitalize">
+        <p className="text-muted-foreground capitalize text-lg font-medium">
           {formatMonthYear()}
         </p>
       </div>
@@ -103,20 +103,20 @@ const Index = () => {
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <Button 
           onClick={simulateExpenseDetection}
           variant="outline"
-          className="flex-1"
+          className="flex-1 h-12 font-semibold border-2"
         >
-          <Bell className="h-4 w-4 mr-2" />
+          <Bell className="h-5 w-5 mr-2" />
           Simular Detección
         </Button>
         <Button 
           onClick={() => setActiveTab('add')}
-          className="flex-1"
+          className="flex-1 h-12 font-semibold bg-primary hover:bg-primary/90"
         >
-          <TrendingUp className="h-4 w-4 mr-2" />
+          <TrendingUp className="h-5 w-5 mr-2" />
           Agregar Movimiento
         </Button>
       </div>

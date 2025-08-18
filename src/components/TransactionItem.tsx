@@ -31,32 +31,32 @@ const TransactionItem = ({ transaction, onDelete }: TransactionItemProps) => {
   const isIncome = transaction.type === 'income';
 
   return (
-    <Card className="mb-2">
+    <Card className="mb-3 border shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className={cn(
-              "p-2 rounded-full",
-              isIncome ? "bg-income/10" : "bg-expense/10"
+              "p-3 rounded-full",
+              isIncome ? "bg-income/20 border border-income/30" : "bg-expense/20 border border-expense/30"
             )}>
               {isIncome ? (
-                <ArrowUpCircle className="h-4 w-4 text-income" />
+                <ArrowUpCircle className="h-5 w-5 text-income" />
               ) : (
-                <ArrowDownCircle className="h-4 w-4 text-expense" />
+                <ArrowDownCircle className="h-5 w-5 text-expense" />
               )}
             </div>
-            <div>
+            <div className="flex-1">
               <div className={cn(
-                "font-semibold",
+                "text-lg font-bold",
                 isIncome ? "text-income" : "text-expense"
               )}>
                 {formatAmount(transaction.amount)}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground font-medium">
                 {formatDate(transaction.date)}
               </div>
               {transaction.description && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-foreground/80 mt-1">
                   {transaction.description}
                 </div>
               )}
@@ -66,7 +66,7 @@ const TransactionItem = ({ transaction, onDelete }: TransactionItemProps) => {
             variant="ghost"
             size="sm"
             onClick={() => onDelete(transaction.id)}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

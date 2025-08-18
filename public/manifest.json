@@ -1,13 +1,15 @@
 {
   "name": "Mis Finanzas Rápidas",
   "short_name": "FinanzasApp",
-  "description": "App móvil para control rápido de finanzas personales",
+  "description": "App móvil para control rápido de finanzas personales y familiares",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",
   "orientation": "portrait",
   "scope": "/",
+  "lang": "es-AR",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/pwa-192x192.png",
@@ -34,5 +36,45 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["finance", "productivity", "utilities"]
+  "categories": ["finance", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agregar Gasto",
+      "short_name": "Gasto",
+      "description": "Agregar un nuevo gasto rápidamente",
+      "url": "/?action=add-expense",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Agregar Ingreso",
+      "short_name": "Ingreso",
+      "description": "Agregar un nuevo ingreso rápidamente",
+      "url": "/?action=add-income",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

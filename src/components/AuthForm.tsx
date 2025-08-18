@@ -36,7 +36,7 @@ const AuthForm = () => {
 
       toast({
         title: "¡Registro exitoso!",
-        description: "Revisa tu email para confirmar tu cuenta",
+        description: "Revisa tu email para confirmar tu cuenta. Si no recibes el email, verifica tu carpeta de spam.",
       });
     } catch (error: any) {
       setError(error.message);
@@ -61,6 +61,33 @@ const AuthForm = () => {
       toast({
         title: "¡Bienvenido!",
         description: "Has iniciado sesión correctamente",
+      });
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Por favor ingresa tu email para recuperar la contraseña');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email enviado",
+        description: "Revisa tu email para restablecer tu contraseña",
       });
     } catch (error: any) {
       setError(error.message);
@@ -126,6 +153,15 @@ const AuthForm = () => {
                   <Button type="submit" className="w-full" disabled={loading}>
                     <LogIn className="h-4 w-4 mr-2" />
                     Iniciar Sesión
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    onClick={handleForgotPassword}
+                    disabled={loading || !email}
+                    className="text-sm"
+                  >
+                    ¿Olvidaste tu contraseña?
                   </Button>
                 </form>
               </TabsContent>

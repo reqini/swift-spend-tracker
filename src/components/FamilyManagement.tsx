@@ -5,24 +5,49 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Plus, Share2, Copy } from "lucide-react";
+import { Users, Plus, Share2, Copy, Crown, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import FamilyInviteForm from "./FamilyInviteForm";
+import FamilyMembers from "./FamilyMembers";
+import FamilyNotifications from "./FamilyNotifications";
+import { FamilyMember, FamilyInvitation, FamilyNotification } from "@/types/finance";
 
 interface FamilyManagementProps {
   familyId: string | null;
+  familyName?: string;
+  familyMembers: FamilyMember[];
+  familyInvitations: FamilyInvitation[];
+  familyNotifications: FamilyNotification[];
+  currentUserId: string;
+  isAdmin: boolean;
   onCreateFamily: (name: string) => Promise<any>;
   onJoinFamily: (inviteCode: string) => Promise<any>;
   onGetInviteCode: () => Promise<string | null>;
+  onSendInvitation: (email: string, message?: string) => Promise<any>;
+  onRemoveMember: (memberId: string) => Promise<boolean>;
+  onChangeRole: (memberId: string, role: 'admin' | 'member') => Promise<boolean>;
+  onNotificationRead: (notificationId: string) => Promise<boolean>;
+  onNotificationDelete: (notificationId: string) => Promise<boolean>;
 }
 
 const FamilyManagement = ({ 
   familyId, 
+  familyName,
+  familyMembers,
+  familyInvitations,
+  familyNotifications,
+  currentUserId,
+  isAdmin,
   onCreateFamily, 
   onJoinFamily, 
-  onGetInviteCode 
+  onGetInviteCode,
+  onSendInvitation,
+  onRemoveMember,
+  onChangeRole,
+  onNotificationRead,
+  onNotificationDelete
 }: FamilyManagementProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [familyName, setFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [showInviteCode, setShowInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,12 +55,11 @@ const FamilyManagement = ({
 
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!familyName.trim()) return;
+    if (!familyName?.trim()) return;
 
     setLoading(true);
     const result = await onCreateFamily(familyName.trim());
     if (result) {
-      setFamilyName('');
       setIsOpen(false);
       toast({
         title: "Familia creada",
@@ -81,53 +105,84 @@ const FamilyManagement = ({
 
   if (familyId) {
     return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" className="w-full">
-            <Share2 className="h-4 w-4 mr-2" />
-            Invitar Familiar
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invitar Familiar</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {!showInviteCode ? (
-              <Button 
-                onClick={handleShowInviteCode} 
-                className="w-full"
-                disabled={loading}
-              >
-                Mostrar Código de Invitación
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <FamilyInviteForm
+            familyId={familyId}
+            familyName={familyName || 'Familia'}
+            onInviteSent={() => {
+              // Refresh data will be handled by the hook
+            }}
+            invitations={familyInvitations}
+            onInvitationUpdate={() => {
+              // This will be handled by the hook
+            }}
+          />
+          <FamilyMembers
+            members={familyMembers}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            onMemberRemove={onRemoveMember}
+            onRoleChange={onChangeRole}
+          />
+        </div>
+        
+        <FamilyNotifications
+          notifications={familyNotifications}
+          onNotificationRead={onNotificationRead}
+          onNotificationDelete={onNotificationDelete}
+        />
+        
+        {isAdmin && (
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full">
+                <Share2 className="h-4 w-4 mr-2" />
+                Código de Invitación
               </Button>
-            ) : (
-              <Card>
-                <CardContent className="pt-4">
-                  <Label>Código de Invitación</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input 
-                      value={showInviteCode} 
-                      readOnly 
-                      className="font-mono"
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={copyInviteCode}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Comparte este código con tu familiar para que pueda unirse
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Código de Invitación</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {!showInviteCode ? (
+                  <Button 
+                    onClick={handleShowInviteCode} 
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    Mostrar Código de Invitación
+                  </Button>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <Label>Código de Invitación</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input 
+                          value={showInviteCode} 
+                          readOnly 
+                          className="font-mono"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={copyInviteCode}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Comparte este código con tu familiar para que pueda unirse
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     );
   }
 

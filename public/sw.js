@@ -31,31 +31,42 @@ self.addEventListener('fetch', (event) => {
 
 // Push event for notifications
 self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { text: event.data.text() };
+    }
+  }
+
   const options = {
-    body: event.data ? event.data.text() : '¿Registrar este movimiento como gasto?',
+    body: data.body || '¿Registrar este movimiento como gasto?',
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
     vibrate: [200, 100, 200],
+    requireInteraction: true,
     data: {
+      ...data,
       dateOfArrival: Date.now(),
       primaryKey: 1
     },
-    actions: [
+    actions: data.actions || [
       {
-        action: 'yes',
-        title: 'Sí, es un gasto',
+        action: 'register',
+        title: 'Registrar',
         icon: '/pwa-192x192.png'
       },
       {
-        action: 'no',
-        title: 'No',
+        action: 'ignore',
+        title: 'Ignorar',
         icon: '/pwa-192x192.png'
       }
     ]
   };
 
   event.waitUntil(
-    self.registration.showNotification('Posible Gasto Detectado', options)
+    self.registration.showNotification(data.title || 'Transacción Detectada', options)
   );
 });
 
@@ -63,14 +74,16 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'yes') {
-    // Handle "Yes, it's an expense" action
+  if (event.action === 'register') {
+    // Handle "Register" action
+    const transactionData = event.notification.data;
+    const url = `/?action=add-transaction&amount=${transactionData.amount}&type=${transactionData.type}&description=${encodeURIComponent(transactionData.description)}`;
     event.waitUntil(
-      clients.openWindow('/?action=add-expense')
+      clients.openWindow(url)
     );
-  } else if (event.action === 'no') {
-    // Handle "No" action - just close
-    console.log('User declined to register expense');
+  } else if (event.action === 'ignore') {
+    // Handle "Ignore" action - just close
+    console.log('User ignored transaction');
   } else {
     // Handle default click
     event.waitUntil(

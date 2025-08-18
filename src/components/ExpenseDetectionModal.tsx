@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CategorySelector } from "@/components/ui/category-selector";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,7 @@ import {
 
 interface ExpenseDetectionModalProps {
   isOpen: boolean;
-  onConfirm: (amount: number, description: string) => void;
+  onConfirm: (amount: number, description: string, category?: string) => void;
   onCancel: () => void;
   detectedText: string;
 }
@@ -29,13 +30,15 @@ const ExpenseDetectionModal = ({
 }: ExpenseDetectionModalProps) => {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<string>("");
 
   const handleConfirm = () => {
     const numAmount = parseFloat(amount);
     if (numAmount && numAmount > 0) {
-      onConfirm(numAmount, description);
+      onConfirm(numAmount, description, category);
       setAmount("");
       setDescription("");
+      setCategory("");
     }
   };
 
@@ -76,6 +79,16 @@ const ExpenseDetectionModal = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Categoría</Label>
+            <CategorySelector
+              value={category}
+              onValueChange={setCategory}
+              type="expense"
+              placeholder="Seleccionar categoría"
             />
           </div>
         </div>

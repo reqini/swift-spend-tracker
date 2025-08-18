@@ -1,15 +1,17 @@
 import { Transaction } from "@/types/finance";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { Trash2, ArrowUpCircle, ArrowDownCircle, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCategoryById } from "@/lib/categories";
 
 interface TransactionItemProps {
   transaction: Transaction;
   onDelete: (id: string) => void;
+  onEdit: (transaction: Transaction) => void;
 }
 
-const TransactionItem = ({ transaction, onDelete }: TransactionItemProps) => {
+const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionItemProps) => {
   const formatAmount = (value: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -29,6 +31,7 @@ const TransactionItem = ({ transaction, onDelete }: TransactionItemProps) => {
   };
 
   const isIncome = transaction.type === 'income';
+  const category = transaction.category ? getCategoryById(transaction.category) : null;
 
   return (
     <Card className="mb-3 border shadow-sm hover:shadow-md transition-shadow">
@@ -60,16 +63,34 @@ const TransactionItem = ({ transaction, onDelete }: TransactionItemProps) => {
                   {transaction.description}
                 </div>
               )}
+              {category && (
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-sm">{category.icon}</span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {category.name}
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(transaction.id)}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+                      </div>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(transaction)}
+                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(transaction.id)}
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
         </div>
       </CardContent>
     </Card>

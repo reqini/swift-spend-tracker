@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Transaction } from '@/types/finance';
+import { 
+  Transaction, 
+  Family, 
+  FamilyMember, 
+  FamilyInvitation, 
+  FamilyNotification 
+} from '@/types/finance';
 
 export const useSupabaseFinance = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
+  const [family, setFamily] = useState<Family | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [familyInvitations, setFamilyInvitations] = useState<FamilyInvitation[]>([]);
+  const [familyNotifications, setFamilyNotifications] = useState<FamilyNotification[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -18,9 +28,14 @@ export const useSupabaseFinance = () => {
         if (session?.user) {
           loadUserFamily(session.user.id);
           loadTransactions(session.user.id);
+          loadFamilyData(session.user.id);
         } else {
           setTransactions([]);
           setFamilyId(null);
+          setFamily(null);
+          setFamilyMembers([]);
+          setFamilyInvitations([]);
+          setFamilyNotifications([]);
         }
       }
     );
@@ -31,6 +46,7 @@ export const useSupabaseFinance = () => {
       if (session?.user) {
         loadUserFamily(session.user.id);
         loadTransactions(session.user.id);
+        loadFamilyData(session.user.id);
       }
       setLoading(false);
     });
@@ -47,6 +63,70 @@ export const useSupabaseFinance = () => {
     
     if (data) {
       setFamilyId(data.family_id);
+    }
+  };
+
+  const loadFamilyData = async (userId: string) => {
+    if (!familyId) return;
+
+    // Load family details
+    const { data: familyData } = await supabase
+      .from('families')
+      .select('*')
+      .eq('id', familyId)
+      .single();
+
+    if (familyData) {
+      setFamily(familyData);
+    }
+
+    // Load family members
+    const { data: membersData } = await supabase
+      .from('family_members')
+      .select(`
+        *,
+        users:user_id(email)
+      `)
+      .eq('family_id', familyId);
+
+    if (membersData) {
+      const membersWithEmails = membersData.map(member => ({
+        ...member,
+        user_email: member.users?.email
+      }));
+      setFamilyMembers(membersWithEmails);
+    }
+
+    // Load family invitations (only for admins)
+    const currentMember = membersData?.find(m => m.user_id === userId);
+    if (currentMember?.role === 'admin') {
+      const { data: invitationsData } = await supabase
+        .from('family_invitations')
+        .select(`
+          *,
+          families:family_id(name)
+        `)
+        .eq('family_id', familyId);
+
+      if (invitationsData) {
+        const invitationsWithNames = invitationsData.map(inv => ({
+          ...inv,
+          family_name: inv.families?.name
+        }));
+        setFamilyInvitations(invitationsWithNames);
+      }
+    }
+
+    // Load family notifications
+    const { data: notificationsData } = await supabase
+      .from('family_notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (notificationsData) {
+      setFamilyNotifications(notificationsData);
     }
   };
 
@@ -138,6 +218,36 @@ export const useSupabaseFinance = () => {
         description: error.message,
         variant: "destructive"
       });
+    }
+  };
+
+  const updateTransaction = async (transaction: Transaction) => {
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          amount: transaction.amount,
+          type: transaction.type,
+          date: transaction.date,
+          description: transaction.description,
+          category: transaction.category
+        })
+        .eq('id', transaction.id);
+
+      if (error) throw error;
+
+      setTransactions(prev => 
+        prev.map(t => t.id === transaction.id ? transaction : t)
+      );
+
+      return transaction;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -334,18 +444,221 @@ export const useSupabaseFinance = () => {
     };
   };
 
+  // Family invitation functions
+  const sendFamilyInvitation = async (email: string, message?: string) => {
+    if (!user || !familyId) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('family_invitations')
+        .insert({
+          family_id: familyId,
+          invited_email: email,
+          invited_by: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create notification for admin
+      await supabase
+        .from('family_notifications')
+        .insert({
+          family_id: familyId,
+          user_id: user.id,
+          type: 'invitation_sent',
+          title: 'Invitación Enviada',
+          message: `Se envió una invitación a ${email}`,
+          data: { invited_email: email }
+        });
+
+      // Reload family data
+      if (user) {
+        await loadFamilyData(user.id);
+      }
+
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const acceptFamilyInvitation = async (token: string) => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('accept_family_invitation', {
+        invitation_token: token
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        // Reload all data
+        await loadUserFamily(user.id);
+        await loadTransactions(user.id);
+        await loadFamilyData(user.id);
+
+        toast({
+          title: "¡Bienvenido a la familia!",
+          description: data.message,
+        });
+        return true;
+      } else {
+        toast({
+          title: "Error",
+          description: data.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Family member management
+  const removeFamilyMember = async (memberId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('family_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      // Reload family data
+      await loadFamilyData(user.id);
+
+      toast({
+        title: "Miembro eliminado",
+        description: "El miembro fue eliminado de la familia",
+      });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const changeMemberRole = async (memberId: string, newRole: 'admin' | 'member') => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('family_members')
+        .update({ role: newRole })
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      // Reload family data
+      await loadFamilyData(user.id);
+
+      toast({
+        title: "Rol actualizado",
+        description: `El rol fue cambiado a ${newRole === 'admin' ? 'administrador' : 'miembro'}`,
+      });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Notification functions
+  const markNotificationAsRead = async (notificationId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('family_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+
+      // Update local state
+      setFamilyNotifications(prev => 
+        prev.map(n => 
+          n.id === notificationId 
+            ? { ...n, read_at: new Date().toISOString() }
+            : n
+        )
+      );
+
+      return true;
+    } catch (error: any) {
+      console.error('Error marking notification as read:', error);
+      return false;
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('family_notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+
+      // Update local state
+      setFamilyNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting notification:', error);
+      return false;
+    }
+  };
+
   return {
     transactions,
     loading,
     user,
     familyId,
+    family,
+    familyMembers,
+    familyInvitations,
+    familyNotifications,
     addTransaction,
     deleteTransaction,
+    updateTransaction,
     getMonthlyTransactions,
     getCurrentMonthBalance,
     createFamily,
     joinFamily,
     getFamilyInviteCode,
+    sendFamilyInvitation,
+    acceptFamilyInvitation,
+    removeFamilyMember,
+    changeMemberRole,
+    markNotificationAsRead,
+    deleteNotification,
     migrateFromLocalStorage,
     refreshData,
     clearAllData

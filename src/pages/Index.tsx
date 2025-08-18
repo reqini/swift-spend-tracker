@@ -9,42 +9,82 @@ import ExpenseDetectionModal from "@/components/ExpenseDetectionModal";
 import BottomNavigation from "@/components/BottomNavigation";
 import FamilyManagement from "@/components/FamilyManagement";
 import AuthForm from "@/components/AuthForm";
+import CategoryStats from "@/components/CategoryStats";
+import CategoryChart from "@/components/CategoryChart";
+import TransactionFilters from "@/components/TransactionFilters";
+import EditTransactionModal from "@/components/EditTransactionModal";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, TrendingUp, Wallet, RefreshCw, Trash2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Transaction } from "@/types/finance";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [detectedText, setDetectedText] = useState('');
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { 
     user, 
     loading, 
     familyId,
+    family,
+    familyMembers,
+    familyInvitations,
+    familyNotifications,
     addTransaction, 
     deleteTransaction, 
+    updateTransaction,
     getCurrentMonthBalance,
     createFamily,
     joinFamily,
     getFamilyInviteCode,
+    sendFamilyInvitation,
+    acceptFamilyInvitation,
+    removeFamilyMember,
+    changeMemberRole,
+    markNotificationAsRead,
+    deleteNotification,
     migrateFromLocalStorage,
     refreshData,
     clearAllData
   } = useSupabaseFinance();
-  const { requestPermission, registerServiceWorker, showNotification, isSupported, permission } = useNotifications();
+  const { 
+    requestPermission, 
+    registerServiceWorker, 
+    showNotification, 
+    isSupported, 
+    permission,
+    isMonitoring,
+    startClipboardMonitoring,
+    simulateExpenseDetection
+  } = useNotifications();
   const { toast } = useToast();
 
   useEffect(() => {
     registerServiceWorker();
     
-    // Handle URL parameters for expense addition from notifications
+    // Handle URL parameters for transaction addition from notifications
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'add-expense') {
       setShowExpenseModal(true);
       setDetectedText('Gasto detectado desde notificación');
       // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('action') === 'add-transaction') {
+      const amount = urlParams.get('amount');
+      const type = urlParams.get('type');
+      const description = urlParams.get('description');
+      
+      if (amount && type) {
+        setShowExpenseModal(true);
+        setDetectedText(`${description || 'Transacción detectada'} - $${amount}`);
+        // Clean the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
 
     // Auto-migrate localStorage data when user logs in
@@ -54,27 +94,21 @@ const Index = () => {
   }, [user]);
 
   const monthBalance = getCurrentMonthBalance();
+  
+  // Inicializar transacciones filtradas cuando cambian las transacciones
+  useEffect(() => {
+    setFilteredTransactions(monthBalance.transactions);
+  }, [monthBalance.transactions]);
 
-  // Simulate expense detection (in real app this would be clipboard monitoring)
-  const simulateExpenseDetection = () => {
-    const mockDetections = [
-      "CBU: 1234567890123456789012",
-      "Alias: mi.cuenta.bancaria",
-      "Tarjeta: **** **** **** 1234",
-      "Transferencia a: juan.perez.alias"
-    ];
-    
-    const randomDetection = mockDetections[Math.floor(Math.random() * mockDetections.length)];
-    setDetectedText(randomDetection);
-    setShowExpenseModal(true);
-  };
 
-  const handleExpenseConfirm = (amount: number, description: string) => {
+
+  const handleExpenseConfirm = (amount: number, description: string, category?: string) => {
     addTransaction({
       amount,
       type: 'expense',
       date: new Date().toISOString(),
       description: description || 'Gasto detectado automáticamente',
+      category,
     });
     
     toast({
@@ -102,12 +136,30 @@ const Index = () => {
     });
   };
 
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setShowEditModal(true);
+  };
+
+  const handleSaveTransaction = async (updatedTransaction: Transaction) => {
+    const result = await updateTransaction(updatedTransaction);
+    if (result) {
+      toast({
+        title: "Movimiento actualizado",
+        description: "El movimiento fue actualizado correctamente",
+      });
+    }
+  };
+
   const handleRequestNotifications = async () => {
     const granted = await requestPermission();
     if (granted) {
       showNotification('¡Notificaciones activadas!', {
-        body: 'Ya puedes recibir alertas de gastos detectados'
+        body: 'Ya puedes recibir alertas de transacciones detectadas'
       });
+      
+      // Iniciar monitoreo del portapapeles
+      startClipboardMonitoring();
     }
   };
 
@@ -174,11 +226,38 @@ const Index = () => {
         <div className="bg-card border border-border rounded-lg p-4 mb-4">
           <h3 className="font-semibold text-foreground mb-2">🔔 Activar Notificaciones</h3>
           <p className="text-muted-foreground text-sm mb-3">
-            Recibe alertas automáticas cuando detectemos posibles gastos
+            Recibe alertas automáticas cuando detectemos transferencias y pagos
           </p>
           <Button onClick={handleRequestNotifications} className="w-full">
             Activar Notificaciones Push
           </Button>
+        </div>
+      )}
+
+      {isSupported && permission === 'granted' && (
+        <div className="bg-card border border-border rounded-lg p-4 mb-4">
+          <h3 className="font-semibold text-foreground mb-2">✅ Notificaciones Activas</h3>
+          <p className="text-muted-foreground text-sm mb-3">
+            {isMonitoring ? 'Monitoreando portapapeles para detectar transacciones' : 'Notificaciones configuradas'}
+          </p>
+          <div className="flex gap-2">
+            <Button 
+              onClick={simulateExpenseDetection}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              Simular Detección
+            </Button>
+            <Button 
+              onClick={startClipboardMonitoring}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              {isMonitoring ? 'Detener Monitoreo' : 'Iniciar Monitoreo'}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -204,21 +283,24 @@ const Index = () => {
       <div className="space-y-3 mb-4">
         <FamilyManagement
           familyId={familyId}
+          familyName={family?.name}
+          familyMembers={familyMembers}
+          familyInvitations={familyInvitations}
+          familyNotifications={familyNotifications}
+          currentUserId={user?.id || ''}
+          isAdmin={familyMembers.find(m => m.user_id === user?.id)?.role === 'admin'}
           onCreateFamily={createFamily}
           onJoinFamily={joinFamily}
           onGetInviteCode={getFamilyInviteCode}
+          onSendInvitation={sendFamilyInvitation}
+          onRemoveMember={removeFamilyMember}
+          onChangeRole={changeMemberRole}
+          onNotificationRead={markNotificationAsRead}
+          onNotificationDelete={deleteNotification}
         />
       </div>
 
       <div className="flex gap-3">
-        <Button 
-          onClick={simulateExpenseDetection}
-          variant="outline"
-          className="flex-1 h-12 font-semibold border-2"
-        >
-          <Bell className="h-5 w-5 mr-2" />
-          Simular Detección
-        </Button>
         <Button 
           onClick={() => setActiveTab('add')}
           className="flex-1 h-12 font-semibold bg-primary hover:bg-primary/90"
@@ -235,7 +317,7 @@ const Index = () => {
             Últimos movimientos
           </h3>
           <div className="space-y-2">
-            {monthBalance.transactions
+            {            monthBalance.transactions
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
               .slice(0, 3)
               .map((transaction) => (
@@ -243,6 +325,7 @@ const Index = () => {
                   key={transaction.id}
                   transaction={transaction}
                   onDelete={handleDeleteTransaction}
+                  onEdit={handleEditTransaction}
                 />
               ))}
           </div>
@@ -254,22 +337,39 @@ const Index = () => {
   const renderTransactions = () => (
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Todos los Movimientos</h2>
-      <ScrollArea className="h-[calc(100vh-200px)]">
+      
+      <TransactionFilters
+        transactions={monthBalance.transactions}
+        onFilterChange={setFilteredTransactions}
+      />
+      
+      <ScrollArea className="h-[calc(100vh-300px)]">
         <div className="space-y-2">
-          {monthBalance.transactions.length === 0 ? (
+          {filteredTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No hay movimientos registrados</p>
-              <p className="text-sm">Agrega tu primer ingreso o gasto</p>
+              <p>
+                {monthBalance.transactions.length === 0 
+                  ? "No hay movimientos registrados" 
+                  : "No se encontraron movimientos con los filtros aplicados"
+                }
+              </p>
+              <p className="text-sm">
+                {monthBalance.transactions.length === 0 
+                  ? "Agrega tu primer ingreso o gasto" 
+                  : "Intenta cambiar los filtros de búsqueda"
+                }
+              </p>
             </div>
           ) : (
-            monthBalance.transactions
+            filteredTransactions
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
               .map((transaction) => (
                 <TransactionItem
                   key={transaction.id}
                   transaction={transaction}
                   onDelete={handleDeleteTransaction}
+                  onEdit={handleEditTransaction}
                 />
               ))
           )}
@@ -287,12 +387,44 @@ const Index = () => {
     </div>
   );
 
+  const renderStats = () => (
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold">Estadísticas del Mes</h2>
+      <div className="space-y-6">
+        <CategoryChart
+          transactions={monthBalance.transactions}
+          type="expense"
+          title="Gastos por Categoría"
+        />
+        <CategoryChart
+          transactions={monthBalance.transactions}
+          type="income"
+          title="Ingresos por Categoría"
+        />
+        <div className="grid grid-cols-1 gap-4">
+          <CategoryStats
+            transactions={monthBalance.transactions}
+            type="expense"
+            title="Detalle de Gastos"
+          />
+          <CategoryStats
+            transactions={monthBalance.transactions}
+            type="income"
+            title="Detalle de Ingresos"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return renderDashboard();
       case 'transactions':
         return renderTransactions();
+      case 'stats':
+        return renderStats();
       case 'add':
         return renderAddTransaction();
       default:
@@ -344,6 +476,15 @@ const Index = () => {
           onCancel={() => setShowExpenseModal(false)}
           detectedText={detectedText}
         />
+        
+        <EditTransactionModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleSaveTransaction}
+          transaction={editingTransaction}
+        />
+        
+        <PWAInstallPrompt />
       </div>
     </div>
   );

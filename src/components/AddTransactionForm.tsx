@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import { Transaction } from "@/types/finance";
+import { CategorySelector } from "@/components/ui/category-selector";
 
 interface AddTransactionFormProps {
   onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
@@ -17,6 +18,7 @@ const AddTransactionForm = ({ onAddTransaction, onClose }: AddTransactionFormPro
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +32,13 @@ const AddTransactionForm = ({ onAddTransaction, onClose }: AddTransactionFormPro
       type,
       date: new Date().toISOString(),
       description: description.trim() || undefined,
+      category: category || undefined,
     });
 
     // Reset form
     setAmount('');
     setDescription('');
+    setCategory('');
     onClose?.();
   };
 
@@ -92,6 +96,16 @@ const AddTransactionForm = ({ onAddTransaction, onClose }: AddTransactionFormPro
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ej: Supermercado, Salario, etc."
               rows={2}
+            />
+          </div>
+
+          <div>
+            <Label>Categoría</Label>
+            <CategorySelector
+              value={category}
+              onValueChange={setCategory}
+              type={type}
+              placeholder="Seleccionar categoría"
             />
           </div>
 

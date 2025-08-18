@@ -75,7 +75,7 @@ export interface FamilyNotification {
   type: 'invitation_sent' | 'invitation_accepted' | 'member_joined' | 'transaction_added';
   title: string;
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
   read_at?: string;
   created_at: string;
 }

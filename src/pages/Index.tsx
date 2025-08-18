@@ -9,11 +9,14 @@ import ExpenseDetectionModal from "@/components/ExpenseDetectionModal";
 import BottomNavigation from "@/components/BottomNavigation";
 import FamilyManagement from "@/components/FamilyManagement";
 import AuthForm from "@/components/AuthForm";
-import CategoryStats from "@/components/CategoryStats";
-import CategoryChart from "@/components/CategoryChart";
-import TransactionFilters from "@/components/TransactionFilters";
-import EditTransactionModal from "@/components/EditTransactionModal";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { Suspense } from "react";
+import { 
+  CategoryStats,
+  CategoryChart,
+  TransactionFilters,
+  EditTransactionModal,
+  PWAInstallPrompt
+} from "@/components/lazy";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, TrendingUp, Wallet, RefreshCw, Trash2, LogOut } from "lucide-react";
@@ -91,7 +94,7 @@ const Index = () => {
     if (user) {
       migrateFromLocalStorage();
     }
-  }, [user]);
+  }, [user, registerServiceWorker, migrateFromLocalStorage]);
 
   const monthBalance = getCurrentMonthBalance();
   
@@ -119,7 +122,7 @@ const Index = () => {
     setShowExpenseModal(false);
   };
 
-  const handleAddTransaction = (transaction: any) => {
+  const handleAddTransaction = (transaction: Omit<Transaction, 'id'>) => {
     addTransaction(transaction);
     toast({
       title: `${transaction.type === 'income' ? 'Ingreso' : 'Gasto'} registrado`,
@@ -338,10 +341,12 @@ const Index = () => {
     <div className="space-y-4">
       <h2 className="text-xl font-bold">Todos los Movimientos</h2>
       
-      <TransactionFilters
-        transactions={monthBalance.transactions}
-        onFilterChange={setFilteredTransactions}
-      />
+      <Suspense fallback={<div className="h-32 bg-muted animate-pulse rounded-lg"></div>}>
+        <TransactionFilters
+          transactions={monthBalance.transactions}
+          onFilterChange={setFilteredTransactions}
+        />
+      </Suspense>
       
       <ScrollArea className="h-[calc(100vh-300px)]">
         <div className="space-y-2">
@@ -391,27 +396,35 @@ const Index = () => {
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Estadísticas del Mes</h2>
       <div className="space-y-6">
-        <CategoryChart
-          transactions={monthBalance.transactions}
-          type="expense"
-          title="Gastos por Categoría"
-        />
-        <CategoryChart
-          transactions={monthBalance.transactions}
-          type="income"
-          title="Ingresos por Categoría"
-        />
-        <div className="grid grid-cols-1 gap-4">
-          <CategoryStats
+        <Suspense fallback={<div className="h-64 bg-muted animate-pulse rounded-lg"></div>}>
+          <CategoryChart
             transactions={monthBalance.transactions}
             type="expense"
-            title="Detalle de Gastos"
+            title="Gastos por Categoría"
           />
-          <CategoryStats
+        </Suspense>
+        <Suspense fallback={<div className="h-64 bg-muted animate-pulse rounded-lg"></div>}>
+          <CategoryChart
             transactions={monthBalance.transactions}
             type="income"
-            title="Detalle de Ingresos"
+            title="Ingresos por Categoría"
           />
+        </Suspense>
+        <div className="grid grid-cols-1 gap-4">
+          <Suspense fallback={<div className="h-32 bg-muted animate-pulse rounded-lg"></div>}>
+            <CategoryStats
+              transactions={monthBalance.transactions}
+              type="expense"
+              title="Detalle de Gastos"
+            />
+          </Suspense>
+          <Suspense fallback={<div className="h-32 bg-muted animate-pulse rounded-lg"></div>}>
+            <CategoryStats
+              transactions={monthBalance.transactions}
+              type="income"
+              title="Detalle de Ingresos"
+            />
+          </Suspense>
         </div>
       </div>
     </div>
@@ -477,14 +490,18 @@ const Index = () => {
           detectedText={detectedText}
         />
         
-        <EditTransactionModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveTransaction}
-          transaction={editingTransaction}
-        />
+        <Suspense fallback={null}>
+          <EditTransactionModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleSaveTransaction}
+            transaction={editingTransaction}
+          />
+        </Suspense>
         
-        <PWAInstallPrompt />
+        <Suspense fallback={null}>
+          <PWAInstallPrompt />
+        </Suspense>
       </div>
     </div>
   );

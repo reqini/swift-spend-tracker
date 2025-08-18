@@ -62,7 +62,7 @@ export const installApp = async (): Promise<boolean> => {
   }
   
   // Buscar el evento beforeinstallprompt
-  const promptEvent = (window as any).deferredPrompt;
+  const promptEvent = (window as { deferredPrompt?: Event }).deferredPrompt;
   
   if (!promptEvent) {
     console.log('No hay prompt de instalación disponible');

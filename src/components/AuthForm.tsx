@@ -38,8 +38,9 @@ const AuthForm = () => {
         title: "¡Registro exitoso!",
         description: "Revisa tu email para confirmar tu cuenta. Si no recibes el email, verifica tu carpeta de spam.",
       });
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -62,8 +63,9 @@ const AuthForm = () => {
         title: "¡Bienvenido!",
         description: "Has iniciado sesión correctamente",
       });
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -92,8 +94,9 @@ const AuthForm = () => {
         title: "Email enviado",
         description: "Revisa tu email para restablecer tu contraseña",
       });
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -123,8 +126,9 @@ const AuthForm = () => {
       
       setNewPassword('');
       setShowResetForm(false);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

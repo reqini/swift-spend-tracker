@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { errorHandler } from '@/lib/error-handler';
 import { 
   Transaction, 
   Family, 
@@ -12,7 +13,7 @@ import {
 export const useSupabaseFinance = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -52,7 +53,7 @@ export const useSupabaseFinance = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadUserFamily, loadTransactions, loadFamilyData]);
 
   const loadUserFamily = async (userId: string) => {
     const { data } = await supabase
@@ -153,13 +154,8 @@ export const useSupabaseFinance = () => {
       })) || [];
 
       setTransactions(formattedTransactions);
-    } catch (error: any) {
-      console.error('Error in loadTransactions:', error);
-      toast({
-        title: "Error al cargar transacciones",
-        description: error.message || "No se pudieron cargar las transacciones",
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'loadTransactions');
     } finally {
       setLoading(false);
     }
@@ -201,13 +197,8 @@ export const useSupabaseFinance = () => {
 
       setTransactions(prev => [newTransaction, ...prev]);
       return newTransaction;
-    } catch (error: any) {
-      console.error('Error in addTransaction:', error);
-      toast({
-        title: "Error al agregar transacción",
-        description: error.message || "No se pudo agregar la transacción",
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'addTransaction');
       return null;
     }
   };
@@ -305,13 +296,8 @@ export const useSupabaseFinance = () => {
       loadTransactions(user.id);
 
       return family;
-    } catch (error: any) {
-      console.error('Error in createFamily:', error);
-      toast({
-        title: "Error al crear familia",
-        description: error.message || "No se pudo crear la familia",
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'createFamily');
       return null;
     }
   };

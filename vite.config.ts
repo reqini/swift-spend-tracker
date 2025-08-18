@@ -10,6 +10,31 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separar React y React DOM
+          'react-vendor': ['react', 'react-dom'],
+          // Separar Supabase
+          'supabase': ['@supabase/supabase-js'],
+          // Separar UI components
+          'ui-components': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-select',
+            '@radix-ui/react-toast'
+          ],
+          // Separar charts
+          'charts': ['recharts'],
+          // Separar utilities
+          'utils': ['date-fns', 'clsx', 'tailwind-merge']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  },
   plugins: [
     react(),
     mode === 'development' && componentTagger(),

@@ -20,10 +20,10 @@ interface FamilyManagementProps {
   familyNotifications: FamilyNotification[];
   currentUserId: string;
   isAdmin: boolean;
-  onCreateFamily: (name: string) => Promise<any>;
-  onJoinFamily: (inviteCode: string) => Promise<any>;
+  onCreateFamily: (name: string) => Promise<{ success: boolean; message?: string }>;
+  onJoinFamily: (inviteCode: string) => Promise<{ success: boolean; message?: string }>;
   onGetInviteCode: () => Promise<string | null>;
-  onSendInvitation: (email: string, message?: string) => Promise<any>;
+  onSendInvitation: (email: string, message?: string) => Promise<{ success: boolean; message?: string }>;
   onRemoveMember: (memberId: string) => Promise<boolean>;
   onChangeRole: (memberId: string, role: 'admin' | 'member') => Promise<boolean>;
   onNotificationRead: (notificationId: string) => Promise<boolean>;

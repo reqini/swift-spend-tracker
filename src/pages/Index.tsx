@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useFinanceStorage } from "@/hooks/useFinanceStorage";
+import { useSupabaseFinance } from "@/hooks/useSupabaseFinance";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
 import FinanceCard from "@/components/FinanceCard";
@@ -7,15 +7,31 @@ import TransactionItem from "@/components/TransactionItem";
 import AddTransactionForm from "@/components/AddTransactionForm";
 import ExpenseDetectionModal from "@/components/ExpenseDetectionModal";
 import BottomNavigation from "@/components/BottomNavigation";
+import FamilyManagement from "@/components/FamilyManagement";
+import AuthForm from "@/components/AuthForm";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, TrendingUp, Wallet } from "lucide-react";
+import { Bell, TrendingUp, Wallet, RefreshCw, Trash2, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [detectedText, setDetectedText] = useState('');
-  const { addTransaction, deleteTransaction, getCurrentMonthBalance } = useFinanceStorage();
+  const { 
+    user, 
+    loading, 
+    familyId,
+    addTransaction, 
+    deleteTransaction, 
+    getCurrentMonthBalance,
+    createFamily,
+    joinFamily,
+    getFamilyInviteCode,
+    migrateFromLocalStorage,
+    refreshData,
+    clearAllData
+  } = useSupabaseFinance();
   const { requestPermission, registerServiceWorker, showNotification, isSupported, permission } = useNotifications();
   const { toast } = useToast();
 
@@ -30,7 +46,12 @@ const Index = () => {
       // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+
+    // Auto-migrate localStorage data when user logs in
+    if (user) {
+      migrateFromLocalStorage();
+    }
+  }, [user]);
 
   const monthBalance = getCurrentMonthBalance();
 
@@ -90,6 +111,28 @@ const Index = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión correctamente",
+    });
+  };
+
+  const handleRefresh = async () => {
+    if (user) {
+      await refreshData();
+      toast({
+        title: "Datos actualizados",
+        description: "Se han sincronizado los datos más recientes",
+      });
+    }
+  };
+
+  const handleClearData = () => {
+    clearAllData();
+  };
+
   const formatMonthYear = () => {
     const now = new Date();
     return now.toLocaleDateString('es-AR', { 
@@ -138,6 +181,34 @@ const Index = () => {
           </Button>
         </div>
       )}
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <Button 
+          onClick={handleRefresh}
+          variant="outline"
+          className="h-12 font-semibold border-2"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Actualizar
+        </Button>
+        <Button 
+          onClick={handleClearData}
+          variant="outline"
+          className="h-12 font-semibold border-2"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Limpiar
+        </Button>
+      </div>
+
+      <div className="space-y-3 mb-4">
+        <FamilyManagement
+          familyId={familyId}
+          onCreateFamily={createFamily}
+          onJoinFamily={joinFamily}
+          onGetInviteCode={getFamilyInviteCode}
+        />
+      </div>
 
       <div className="flex gap-3">
         <Button 
@@ -229,10 +300,36 @@ const Index = () => {
     }
   };
 
+  // Show loading spinner while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show auth form if user is not logged in
+  if (!user) {
+    return <AuthForm />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto">
         <div className="p-4 pb-20">
+          <div className="flex justify-between items-center mb-4">
+            <div></div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
           {renderContent()}
         </div>
         

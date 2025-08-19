@@ -133,7 +133,7 @@ export class ReportGenerator {
   }
 
   // Calcular resumen
-  private calculateSummary(transactions: any[]) {
+  private calculateSummary(transactions: Array<Record<string, unknown>>) {
     const income = transactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -158,7 +158,7 @@ export class ReportGenerator {
   }
 
   // Calcular desglose por categorías
-  private calculateCategoryBreakdown(transactions: any[]) {
+  private calculateCategoryBreakdown(transactions: Array<Record<string, unknown>>) {
     const categoryMap = new Map<string, { income: number; expenses: number; count: number }>();
 
     transactions.forEach(transaction => {
@@ -188,7 +188,7 @@ export class ReportGenerator {
   }
 
   // Calcular tendencias
-  private async calculateTrends(reportData: ReportData, transactions: any[]) {
+  private async calculateTrends(reportData: ReportData, transactions: Array<Record<string, unknown>>) {
     // Agrupar por día
     const dailySpending = new Map<string, number>();
     const categoryBreakdown = new Map<string, number>();
@@ -228,8 +228,8 @@ export class ReportGenerator {
   // Generar insights
   private async generateInsights(
     reportData: ReportData, 
-    transactions: any[], 
-    budgets: any[]
+    transactions: Array<Record<string, unknown>>, 
+    budgets: Array<Record<string, unknown>>
   ) {
     const insights = [];
     const summary = this.calculateSummary(transactions);

@@ -119,19 +119,19 @@ export class OfflineManager {
   private async processAction(action: OfflineAction): Promise<void> {
     switch (action.type) {
       case 'CREATE_TRANSACTION':
-        await this.processCreateTransaction(action.data as any);
+        await this.processCreateTransaction(action.data as Record<string, unknown>);
         break;
       case 'UPDATE_TRANSACTION':
-        await this.processUpdateTransaction(action.data as any);
+        await this.processUpdateTransaction(action.data as Record<string, unknown>);
         break;
       case 'DELETE_TRANSACTION':
-        await this.processDeleteTransaction(action.data as any);
+        await this.processDeleteTransaction(action.data as Record<string, unknown>);
         break;
       case 'CREATE_FAMILY':
-        await this.processCreateFamily(action.data as any);
+        await this.processCreateFamily(action.data as Record<string, unknown>);
         break;
       case 'JOIN_FAMILY':
-        await this.processJoinFamily(action.data as any);
+        await this.processJoinFamily(action.data as Record<string, unknown>);
         break;
       default:
         throw new Error(`Unknown action type: ${action.type}`);
@@ -139,7 +139,7 @@ export class OfflineManager {
   }
 
   // Procesar creación de transacción
-  private async processCreateTransaction(data: any): Promise<void> {
+  private async processCreateTransaction(data: Record<string, unknown>): Promise<void> {
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
@@ -150,10 +150,10 @@ export class OfflineManager {
   }
 
   // Procesar actualización de transacción
-  private async processUpdateTransaction(data: any): Promise<void> {
+  private async processUpdateTransaction(data: Record<string, unknown>): Promise<void> {
     const { supabase } = await import('@/integrations/supabase/client');
     
-    const { id, ...updateData } = data;
+    const { id, ...updateData } = data as { id: string; [key: string]: unknown };
     const { error } = await supabase
       .from('transactions')
       .update(updateData)
@@ -163,19 +163,19 @@ export class OfflineManager {
   }
 
   // Procesar eliminación de transacción
-  private async processDeleteTransaction(data: any): Promise<void> {
+  private async processDeleteTransaction(data: Record<string, unknown>): Promise<void> {
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
       .from('transactions')
       .delete()
-      .eq('id', data.id);
+      .eq('id', (data as { id: string }).id);
 
     if (error) throw error;
   }
 
   // Procesar creación de familia
-  private async processCreateFamily(data: any): Promise<void> {
+  private async processCreateFamily(data: Record<string, unknown>): Promise<void> {
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase
@@ -186,7 +186,7 @@ export class OfflineManager {
   }
 
   // Procesar unión a familia
-  private async processJoinFamily(data: any): Promise<void> {
+  private async processJoinFamily(data: Record<string, unknown>): Promise<void> {
     const { supabase } = await import('@/integrations/supabase/client');
     
     const { error } = await supabase

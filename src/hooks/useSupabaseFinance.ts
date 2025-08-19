@@ -464,10 +464,11 @@ export const useSupabaseFinance = () => {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return null;
@@ -503,10 +504,11 @@ export const useSupabaseFinance = () => {
         });
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
@@ -533,10 +535,11 @@ export const useSupabaseFinance = () => {
         description: "El miembro fue eliminado de la familia",
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
@@ -562,10 +565,11 @@ export const useSupabaseFinance = () => {
         description: `El rol fue cambiado a ${newRole === 'admin' ? 'administrador' : 'miembro'}`,
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
@@ -594,7 +598,7 @@ export const useSupabaseFinance = () => {
       );
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error marking notification as read:', error);
       return false;
     }
@@ -615,7 +619,7 @@ export const useSupabaseFinance = () => {
       setFamilyNotifications(prev => prev.filter(n => n.id !== notificationId));
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting notification:', error);
       return false;
     }

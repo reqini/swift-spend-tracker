@@ -97,6 +97,13 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
   }
   
   try {
+    // Check if service worker is already registered
+    const existingRegistration = await navigator.serviceWorker.getRegistration();
+    if (existingRegistration) {
+      console.log('Service Worker ya registrado:', existingRegistration);
+      return existingRegistration;
+    }
+    
     const registration = await navigator.serviceWorker.register('/sw.js');
     console.log('Service Worker registrado:', registration);
     return registration;

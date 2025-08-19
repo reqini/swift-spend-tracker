@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mis-finanzas-v1';
+const CACHE_NAME = 'mis-finanzas-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -14,17 +14,51 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  // Take control of all clients immediately
+  event.waitUntil(self.clients.claim());
 });
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
+  // Skip cache for API calls and dynamic content
+  if (event.request.url.includes('/api/') || 
+      event.request.url.includes('supabase.co') ||
+      event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
+        // Return cached version if available
         if (response) {
           return response;
         }
+        // Otherwise fetch from network
         return fetch(event.request);
+      })
+      .catch(() => {
+        // If both cache and network fail, return a fallback
+        if (event.request.destination === 'document') {
+          return caches.match('/');
+        }
       })
   );
 });

@@ -68,6 +68,7 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Register service worker only once
     registerServiceWorker();
     
     // Handle URL parameters for transaction addition from notifications
@@ -94,7 +95,7 @@ const Index = () => {
     if (user) {
       migrateFromLocalStorage();
     }
-  }, [user, registerServiceWorker, migrateFromLocalStorage]);
+  }, [user, migrateFromLocalStorage]); // Removed registerServiceWorker from dependencies
 
   const monthBalance = getCurrentMonthBalance();
   

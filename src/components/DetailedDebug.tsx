@@ -5,6 +5,8 @@ const DetailedDebug = () => {
   const [debugInfo, setDebugInfo] = useState({
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
     supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    supabaseProjectId: import.meta.env.VITE_SUPABASE_PROJECT_ID,
+    supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     hasSupabaseUrl: !!import.meta.env.VITE_SUPABASE_URL,
     hasSupabaseKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
     keyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length || 0,
@@ -20,6 +22,8 @@ const DetailedDebug = () => {
     console.log('Environment Variables Debug:', {
       VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
       VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      VITE_SUPABASE_PROJECT_ID: import.meta.env.VITE_SUPABASE_PROJECT_ID,
+      VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       MODE: import.meta.env.MODE,
       BASE_URL: import.meta.env.BASE_URL
     });
@@ -29,11 +33,14 @@ const DetailedDebug = () => {
       try {
         const { data, error } = await supabase.from('transactions').select('count').limit(1);
         if (error) {
+          console.log('Supabase connection error:', error);
           setDebugInfo(prev => ({ ...prev, supabaseStatus: 'error' }));
         } else {
+          console.log('Supabase connection successful');
           setDebugInfo(prev => ({ ...prev, supabaseStatus: 'connected' }));
         }
       } catch (err) {
+        console.log('Supabase connection exception:', err);
         setDebugInfo(prev => ({ ...prev, supabaseStatus: 'error' }));
       }
     };
@@ -65,11 +72,23 @@ const DetailedDebug = () => {
         </div>
         
         <div>
-          <strong>Supabase Key:</strong> {debugInfo.hasSupabaseKey ? '✅ Configurada' : '⚠️ Usando valor por defecto'}
+          <strong>Supabase Key (ANON_KEY):</strong> {debugInfo.hasSupabaseKey ? '✅ Configurada' : '⚠️ Usando valor por defecto'}
           <br />
           <span className="text-xs opacity-75">Longitud: {debugInfo.keyLength} caracteres</span>
           <br />
           <span className="text-xs opacity-75">Valor: {debugInfo.supabaseKey ? `${debugInfo.supabaseKey.substring(0, 20)}...` : 'undefined (usando fallback)'}</span>
+        </div>
+
+        <div>
+          <strong>Supabase Project ID:</strong> {debugInfo.supabaseProjectId ? '✅ Configurado' : '❌ No configurado'}
+          <br />
+          <span className="text-xs opacity-75">Valor: {debugInfo.supabaseProjectId || 'undefined'}</span>
+        </div>
+
+        <div>
+          <strong>Supabase Publishable Key:</strong> {debugInfo.supabasePublishableKey ? '✅ Configurado' : '❌ No configurado'}
+          <br />
+          <span className="text-xs opacity-75">Valor: {debugInfo.supabasePublishableKey ? `${debugInfo.supabasePublishableKey.substring(0, 20)}...` : 'undefined'}</span>
         </div>
         
         <div>

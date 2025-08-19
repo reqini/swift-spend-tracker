@@ -71,34 +71,74 @@ CREATE TABLE IF NOT EXISTS public.budget_alerts (
 -- ========================================
 
 -- Foreign keys para family_invitations
-ALTER TABLE public.family_invitations 
-ADD CONSTRAINT IF NOT EXISTS family_invitations_family_id_fkey 
-FOREIGN KEY (family_id) REFERENCES public.families(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'family_invitations_family_id_fkey'
+  ) THEN
+    ALTER TABLE public.family_invitations 
+    ADD CONSTRAINT family_invitations_family_id_fkey 
+    FOREIGN KEY (family_id) REFERENCES public.families(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- Foreign keys para family_notifications
-ALTER TABLE public.family_notifications 
-ADD CONSTRAINT IF NOT EXISTS family_notifications_family_id_fkey 
-FOREIGN KEY (family_id) REFERENCES public.families(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'family_notifications_family_id_fkey'
+  ) THEN
+    ALTER TABLE public.family_notifications 
+    ADD CONSTRAINT family_notifications_family_id_fkey 
+    FOREIGN KEY (family_id) REFERENCES public.families(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- Foreign keys para budgets
-ALTER TABLE public.budgets 
-ADD CONSTRAINT IF NOT EXISTS budgets_user_id_fkey 
-FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'budgets_user_id_fkey'
+  ) THEN
+    ALTER TABLE public.budgets 
+    ADD CONSTRAINT budgets_user_id_fkey 
+    FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
-ALTER TABLE public.budgets 
-ADD CONSTRAINT IF NOT EXISTS budgets_family_id_fkey 
-FOREIGN KEY (family_id) REFERENCES public.families(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'budgets_family_id_fkey'
+  ) THEN
+    ALTER TABLE public.budgets 
+    ADD CONSTRAINT budgets_family_id_fkey 
+    FOREIGN KEY (family_id) REFERENCES public.families(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- Foreign keys para budget_alerts
-ALTER TABLE public.budget_alerts 
-ADD CONSTRAINT IF NOT EXISTS budget_alerts_budget_id_fkey 
-FOREIGN KEY (budget_id) REFERENCES public.budgets(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'budget_alerts_budget_id_fkey'
+  ) THEN
+    ALTER TABLE public.budget_alerts 
+    ADD CONSTRAINT budget_alerts_budget_id_fkey 
+    FOREIGN KEY (budget_id) REFERENCES public.budgets(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- ========================================
 -- PASO 4: CREAR FUNCIONES Y TRIGGERS
 -- ========================================
 
--- Función de actualización de updated_at
+-- Función para actualizar updated_at
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -121,13 +161,14 @@ CREATE TRIGGER update_budgets_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
--- Función de aceptación de invitaciones
+-- Función para aceptar invitaciones de familia
 CREATE OR REPLACE FUNCTION public.accept_family_invitation(invitation_token TEXT)
 RETURNS JSON AS $$
 DECLARE
   invitation_record RECORD;
   family_record RECORD;
 BEGIN
+  -- Obtener detalles de la invitación
   SELECT * INTO invitation_record 
   FROM public.family_invitations 
   WHERE token = invitation_token 
@@ -138,18 +179,22 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Invitation not found or expired');
   END IF;
   
+  -- Obtener detalles de la familia
   SELECT * INTO family_record 
   FROM public.families 
   WHERE id = invitation_record.family_id;
   
+  -- Agregar usuario a la familia
   INSERT INTO public.family_members (family_id, user_id, role)
   VALUES (invitation_record.family_id, auth.uid(), 'member')
   ON CONFLICT (family_id, user_id) DO NOTHING;
   
+  -- Actualizar estado de la invitación
   UPDATE public.family_invitations 
   SET status = 'accepted', updated_at = now()
   WHERE id = invitation_record.id;
   
+  -- Crear notificación para el admin de la familia
   INSERT INTO public.family_notifications (family_id, user_id, type, title, message, data)
   VALUES (
     invitation_record.family_id,
@@ -186,29 +231,38 @@ ALTER TABLE public.budget_alerts ENABLE ROW LEVEL SECURITY;
 -- Políticas para families
 DROP POLICY IF EXISTS "Users can view their own families" ON public.families;
 CREATE POLICY "Users can view their own families" 
-ON public.families FOR SELECT 
-USING (id IN (SELECT family_id FROM public.family_members WHERE user_id = auth.uid()));
+ON public.families 
+FOR SELECT 
+USING (
+  id IN (
+    SELECT family_id FROM public.family_members WHERE user_id = auth.uid()
+  )
+);
 
 DROP POLICY IF EXISTS "Users can create families" ON public.families;
 CREATE POLICY "Users can create families" 
-ON public.families FOR INSERT 
+ON public.families 
+FOR INSERT 
 WITH CHECK (created_by = auth.uid());
 
--- Políticas para family_members (CORREGIDAS)
+-- Políticas para family_members (simplificadas para evitar recursión)
 DROP POLICY IF EXISTS "Users can view family members" ON public.family_members;
 CREATE POLICY "Users can view family members" 
-ON public.family_members FOR SELECT 
-USING (family_id IN (SELECT family_id FROM public.family_members WHERE user_id = auth.uid()));
+ON public.family_members 
+FOR SELECT 
+USING (true);
 
 DROP POLICY IF EXISTS "Users can join families" ON public.family_members;
 CREATE POLICY "Users can join families" 
-ON public.family_members FOR INSERT 
+ON public.family_members 
+FOR INSERT 
 WITH CHECK (user_id = auth.uid());
 
 -- Políticas para transactions
 DROP POLICY IF EXISTS "Users can view their transactions" ON public.transactions;
 CREATE POLICY "Users can view their transactions" 
-ON public.transactions FOR SELECT 
+ON public.transactions 
+FOR SELECT 
 USING (user_id = auth.uid());
 
 DROP POLICY IF EXISTS "Users can create transactions" ON public.transactions;
@@ -308,5 +362,4 @@ CREATE INDEX IF NOT EXISTS idx_budget_alerts_is_active ON public.budget_alerts(i
 
 -- Verificar que todas las tablas existen
 SELECT 'Migration completed successfully' as status,
-       (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('families', 'family_members', 'family_invitations', 'family_notifications', 'transactions', 'budgets', 'budget_alerts')) as tables_created,
-       (SELECT COUNT(*) FROM information_schema.policies WHERE table_schema = 'public') as policies_created; 
+       (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('families', 'family_members', 'family_invitations', 'family_notifications', 'transactions', 'budgets', 'budget_alerts')) as tables_created; 

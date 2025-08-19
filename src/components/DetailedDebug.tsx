@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const DetailedDebug = () => {
   const [debugInfo, setDebugInfo] = useState({
@@ -10,7 +11,8 @@ const DetailedDebug = () => {
     environment: import.meta.env.MODE,
     baseUrl: import.meta.env.BASE_URL,
     timestamp: new Date().toISOString(),
-    allEnvVars: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_'))
+    allEnvVars: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')),
+    supabaseStatus: 'checking'
   });
 
   useEffect(() => {
@@ -21,24 +23,57 @@ const DetailedDebug = () => {
       MODE: import.meta.env.MODE,
       BASE_URL: import.meta.env.BASE_URL
     });
+
+    // Test Supabase connection
+    const testSupabase = async () => {
+      try {
+        const { data, error } = await supabase.from('transactions').select('count').limit(1);
+        if (error) {
+          setDebugInfo(prev => ({ ...prev, supabaseStatus: 'error' }));
+        } else {
+          setDebugInfo(prev => ({ ...prev, supabaseStatus: 'connected' }));
+        }
+      } catch (err) {
+        setDebugInfo(prev => ({ ...prev, supabaseStatus: 'error' }));
+      }
+    };
+
+    testSupabase();
   }, []);
+
+  const getSupabaseStatus = () => {
+    switch (debugInfo.supabaseStatus) {
+      case 'connected':
+        return '✅ Conectado';
+      case 'error':
+        return '❌ Error de conexión';
+      case 'checking':
+        return '⏳ Verificando...';
+      default:
+        return '❓ Desconocido';
+    }
+  };
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-red-500 text-white p-4 z-50 text-xs max-h-96 overflow-y-auto">
       <h3 className="font-bold mb-2">🔍 Detailed Debug Info:</h3>
       <div className="space-y-2">
         <div>
-          <strong>Supabase URL:</strong> {debugInfo.hasSupabaseUrl ? '✅ Configurada' : '❌ Faltante'}
+          <strong>Supabase URL:</strong> {debugInfo.hasSupabaseUrl ? '✅ Configurada' : '⚠️ Usando valor por defecto'}
           <br />
-          <span className="text-xs opacity-75">Valor: {debugInfo.supabaseUrl || 'undefined'}</span>
+          <span className="text-xs opacity-75">Valor: {debugInfo.supabaseUrl || 'undefined (usando fallback)'}</span>
         </div>
         
         <div>
-          <strong>Supabase Key:</strong> {debugInfo.hasSupabaseKey ? '✅ Configurada' : '❌ Faltante'}
+          <strong>Supabase Key:</strong> {debugInfo.hasSupabaseKey ? '✅ Configurada' : '⚠️ Usando valor por defecto'}
           <br />
           <span className="text-xs opacity-75">Longitud: {debugInfo.keyLength} caracteres</span>
           <br />
-          <span className="text-xs opacity-75">Valor: {debugInfo.supabaseKey ? `${debugInfo.supabaseKey.substring(0, 20)}...` : 'undefined'}</span>
+          <span className="text-xs opacity-75">Valor: {debugInfo.supabaseKey ? `${debugInfo.supabaseKey.substring(0, 20)}...` : 'undefined (usando fallback)'}</span>
+        </div>
+        
+        <div>
+          <strong>Supabase Status:</strong> {getSupabaseStatus()}
         </div>
         
         <div>
@@ -73,6 +108,11 @@ const DetailedDebug = () => {
         3. Marcar "Production" environment
         <br />
         4. Hacer redeploy
+        <br />
+        <br />
+        <strong>Para desarrollo local:</strong>
+        <br />
+        Crear archivo .env.local con las variables de entorno
       </div>
     </div>
   );

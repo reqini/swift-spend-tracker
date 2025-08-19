@@ -8,6 +8,7 @@ import AddTransactionForm from "@/components/AddTransactionForm";
 import ExpenseDetectionModal from "@/components/ExpenseDetectionModal";
 import BottomNavigation from "@/components/BottomNavigation";
 import FamilyManagement from "@/components/FamilyManagement";
+import FamilyDebug from "@/components/FamilyDebug";
 import AuthForm from "@/components/AuthForm";
 import { Suspense } from "react";
 import { 
@@ -285,6 +286,15 @@ const Index = () => {
       </div>
 
       <div className="space-y-3 mb-4">
+        <FamilyDebug
+          familyId={familyId}
+          familyName={family?.name}
+          familyMembers={familyMembers}
+          familyInvitations={familyInvitations}
+          familyNotifications={familyNotifications}
+          currentUserId={user?.id || ''}
+          isAdmin={familyMembers.find(m => m.user_id === user?.id)?.role === 'admin'}
+        />
         <FamilyManagement
           familyId={familyId}
           familyName={family?.name}

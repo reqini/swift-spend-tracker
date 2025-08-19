@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { errorHandler } from '@/lib/error-handler';
@@ -55,7 +55,7 @@ export const useSupabaseFinance = () => {
     return () => subscription.unsubscribe();
   }, [loadUserFamily, loadTransactions, loadFamilyData]);
 
-  const loadUserFamily = async (userId: string) => {
+  const loadUserFamily = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from('family_members')
       .select('family_id')
@@ -65,9 +65,9 @@ export const useSupabaseFinance = () => {
     if (data) {
       setFamilyId(data.family_id);
     }
-  };
+  }, []);
 
-  const loadFamilyData = async (userId: string) => {
+  const loadFamilyData = useCallback(async (userId: string) => {
     if (!familyId) return;
 
     // Load family details
@@ -129,9 +129,9 @@ export const useSupabaseFinance = () => {
     if (notificationsData) {
       setFamilyNotifications(notificationsData);
     }
-  };
+  }, [familyId]);
 
-  const loadTransactions = async (userId: string) => {
+  const loadTransactions = useCallback(async (userId: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -159,7 +159,7 @@ export const useSupabaseFinance = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) return null;
@@ -213,12 +213,8 @@ export const useSupabaseFinance = () => {
       if (error) throw error;
 
       setTransactions(prev => prev.filter(t => t.id !== id));
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'deleteTransaction');
     }
   };
 
@@ -242,12 +238,8 @@ export const useSupabaseFinance = () => {
       );
 
       return transaction;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'updateTransaction');
       return null;
     }
   };
@@ -335,12 +327,8 @@ export const useSupabaseFinance = () => {
       loadTransactions(user.id);
 
       return family;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'joinFamily');
       return null;
     }
   };
@@ -357,12 +345,8 @@ export const useSupabaseFinance = () => {
 
       if (error) throw error;
       return data.invite_code;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'getFamilyInviteCode');
       return null;
     }
   };
@@ -398,12 +382,8 @@ export const useSupabaseFinance = () => {
         title: "Migración exitosa",
         description: `Se migraron ${localTransactions.length} transacciones`,
       });
-    } catch (error: any) {
-      toast({
-        title: "Error en migración",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (error: unknown) {
+      errorHandler.handleError(error, 'migrateFromLocalStorage');
     }
   };
 

@@ -21,40 +21,7 @@ export const useSupabaseFinance = () => {
   const [familyNotifications, setFamilyNotifications] = useState<FamilyNotification[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadUserFamily(session.user.id);
-          loadTransactions(session.user.id);
-          loadFamilyData(session.user.id);
-        } else {
-          setTransactions([]);
-          setFamilyId(null);
-          setFamily(null);
-          setFamilyMembers([]);
-          setFamilyInvitations([]);
-          setFamilyNotifications([]);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadUserFamily(session.user.id);
-        loadTransactions(session.user.id);
-        loadFamilyData(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadUserFamily, loadTransactions, loadFamilyData]);
-
+  // Declare functions before useEffect to avoid initialization error
   const loadUserFamily = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from('family_members')
@@ -147,19 +114,56 @@ export const useSupabaseFinance = () => {
       const formattedTransactions = data?.map(t => ({
         id: t.id,
         amount: Number(t.amount),
-        type: t.type as 'income' | 'expense',
+        type: t.type,
+        description: t.description,
+        category: t.category,
         date: t.date,
-        description: t.description || undefined,
-        category: t.category || undefined
+        created_at: t.created_at,
+        updated_at: t.updated_at
       })) || [];
 
       setTransactions(formattedTransactions);
     } catch (error: unknown) {
-      errorHandler.handleError(error, 'loadTransactions');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error('Error loading transactions:', errorMessage);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          loadUserFamily(session.user.id);
+          loadTransactions(session.user.id);
+          loadFamilyData(session.user.id);
+        } else {
+          setTransactions([]);
+          setFamilyId(null);
+          setFamily(null);
+          setFamilyMembers([]);
+          setFamilyInvitations([]);
+          setFamilyNotifications([]);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserFamily(session.user.id);
+        loadTransactions(session.user.id);
+        loadFamilyData(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadUserFamily, loadTransactions, loadFamilyData]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) return null;

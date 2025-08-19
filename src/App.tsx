@@ -6,15 +6,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import DetailedDebug from "./components/DetailedDebug";
-import SimpleFallback from "./components/SimpleFallback";
 
 const App = () => {
-  const hasRequiredEnvVars = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-  if (!hasRequiredEnvVars) {
-    return <SimpleFallback />;
-  }
-
+  // Siempre mostrar la app, ya que Supabase tiene valores por defecto
   return (
     <TooltipProvider>
       <DetailedDebug />

@@ -23,7 +23,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-      <LiveDebug isVisible={showDebug} onToggle={() => setShowDebug(!showDebug)} />
+      {/* <LiveDebug isVisible={showDebug} onToggle={() => setShowDebug(!showDebug)} /> */}
     </TooltipProvider>
   );
 };

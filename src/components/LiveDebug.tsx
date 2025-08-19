@@ -91,7 +91,15 @@ const LiveDebug: React.FC<LiveDebugProps> = ({ isVisible, onToggle }) => {
   useEffect(() => {
     if (isVisible && !isMonitoring) {
       setIsMonitoring(true);
-      addLog('info', '🔍 Monitoreo iniciado - Navega por la app para detectar errores', 'system');
+      // Agregar log inicial sin usar addLog para evitar bucle
+      const initialLog: DebugLog = {
+        id: Date.now().toString(),
+        type: 'info',
+        message: '🔍 Monitoreo iniciado - Navega por la app para detectar errores',
+        timestamp: new Date(),
+        source: 'system'
+      };
+      setLogs(prev => [initialLog, ...prev.slice(0, 49)]);
     }
   }, [isVisible, isMonitoring]);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -11,68 +11,65 @@ interface DebugLog {
   message: string;
   timestamp: Date;
   source?: string;
-  stack?: string;
 }
 
-interface LiveDebugProps {
+interface SimpleDebugProps {
   isVisible: boolean;
   onToggle: () => void;
 }
 
-const LiveDebug: React.FC<LiveDebugProps> = ({ isVisible, onToggle }) => {
+const SimpleDebug: React.FC<SimpleDebugProps> = ({ isVisible, onToggle }) => {
   const [logs, setLogs] = useState<DebugLog[]>([]);
   const [errorCount, setErrorCount] = useState(0);
   const [warningCount, setWarningCount] = useState(0);
-  const [isMonitoring, setIsMonitoring] = useState(false);
 
-  // Interceptar errores globales
-  useEffect(() => {
-    if (!isMonitoring) return;
-
-    const originalError = console.error;
-    const originalWarn = console.warn;
-    const originalLog = console.log;
-
-    const addLog = (type: DebugLog['type'], message: string, source?: string) => {
-      const newLog: DebugLog = {
-        id: Date.now().toString(),
-        type,
-        message: typeof message === 'string' ? message : JSON.stringify(message),
-        timestamp: new Date(),
-        source: source || 'console'
-      };
-
-      setLogs(prev => [newLog, ...prev.slice(0, 49)]); // Mantener solo los últimos 50 logs
-
-      if (type === 'error') {
-        setErrorCount(prev => prev + 1);
-      } else if (type === 'warning') {
-        setWarningCount(prev => prev + 1);
-      }
+  // Función segura para agregar logs
+  const addLog = useCallback((type: DebugLog['type'], message: string, source?: string) => {
+    const newLog: DebugLog = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      type,
+      message: typeof message === 'string' ? message : JSON.stringify(message),
+      timestamp: new Date(),
+      source: source || 'console'
     };
 
+    setLogs(prev => [newLog, ...prev.slice(0, 19)]); // Solo 20 logs máximo
+
+    if (type === 'error') {
+      setErrorCount(prev => prev + 1);
+    } else if (type === 'warning') {
+      setWarningCount(prev => prev + 1);
+    }
+  }, []);
+
+  // Interceptar errores solo cuando está visible
+  useEffect(() => {
+    if (!isVisible) return;
+
+    // Agregar log inicial
+    addLog('info', '🔍 Debug iniciado', 'system');
+
+    // Interceptar errores no manejados
+    const handleUnhandledError = (event: ErrorEvent) => {
+      addLog('error', `Error: ${event.error?.message || event.message}`, 'unhandled');
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      addLog('error', `Promise rejected: ${event.reason}`, 'unhandled');
+    };
+
+    // Interceptar console.error
+    const originalError = console.error;
     console.error = (...args) => {
       originalError.apply(console, args);
       addLog('error', args.join(' '), 'console.error');
     };
 
+    // Interceptar console.warn
+    const originalWarn = console.warn;
     console.warn = (...args) => {
       originalWarn.apply(console, args);
       addLog('warning', args.join(' '), 'console.warn');
-    };
-
-    console.log = (...args) => {
-      originalLog.apply(console, args);
-      addLog('info', args.join(' '), 'console.log');
-    };
-
-    // Interceptar errores no capturados
-    const handleUnhandledError = (event: ErrorEvent) => {
-      addLog('error', `${event.error?.message || event.message}`, 'unhandled');
-    };
-
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      addLog('error', `Promise rejected: ${event.reason}`, 'unhandled');
     };
 
     window.addEventListener('error', handleUnhandledError);
@@ -81,45 +78,16 @@ const LiveDebug: React.FC<LiveDebugProps> = ({ isVisible, onToggle }) => {
     return () => {
       console.error = originalError;
       console.warn = originalWarn;
-      console.log = originalLog;
       window.removeEventListener('error', handleUnhandledError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, [isMonitoring]);
+  }, [isVisible, addLog]);
 
-  // Iniciar monitoreo cuando se hace visible
-  useEffect(() => {
-    if (isVisible && !isMonitoring) {
-      setIsMonitoring(true);
-      // Agregar log inicial sin usar addLog para evitar bucle
-      const initialLog: DebugLog = {
-        id: Date.now().toString(),
-        type: 'info',
-        message: '🔍 Monitoreo iniciado - Navega por la app para detectar errores',
-        timestamp: new Date(),
-        source: 'system'
-      };
-      setLogs(prev => [initialLog, ...prev.slice(0, 49)]);
-    }
-  }, [isVisible, isMonitoring]);
-
-  const addLog = (type: DebugLog['type'], message: string, source?: string) => {
-    const newLog: DebugLog = {
-      id: Date.now().toString(),
-      type,
-      message,
-      timestamp: new Date(),
-      source: source || 'system'
-    };
-
-    setLogs(prev => [newLog, ...prev.slice(0, 49)]);
-  };
-
-  const clearLogs = () => {
+  const clearLogs = useCallback(() => {
     setLogs([]);
     setErrorCount(0);
     setWarningCount(0);
-  };
+  }, []);
 
   const getLogIcon = (type: DebugLog['type']) => {
     switch (type) {
@@ -173,17 +141,17 @@ const LiveDebug: React.FC<LiveDebugProps> = ({ isVisible, onToggle }) => {
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center">
               <Bug className="h-4 w-4 mr-2" />
-              Live Debug
+              Simple Debug
             </CardTitle>
             <div className="flex items-center gap-2">
               {errorCount > 0 && (
                 <Badge variant="destructive" className="text-xs">
-                  {errorCount} errores
+                  {errorCount}
                 </Badge>
               )}
               {warningCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
-                  {warningCount} warnings
+                  {warningCount}
                 </Badge>
               )}
               <Button
@@ -235,4 +203,4 @@ const LiveDebug: React.FC<LiveDebugProps> = ({ isVisible, onToggle }) => {
   );
 };
 
-export default LiveDebug; 
+export default SimpleDebug; 

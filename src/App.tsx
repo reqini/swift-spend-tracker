@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
-import LiveDebug from "./components/LiveDebug";
+import SimpleDebug from "./components/SimpleDebug";
 
 const App = () => {
   const [showDebug, setShowDebug] = React.useState(false);
@@ -23,7 +23,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-      {/* <LiveDebug isVisible={showDebug} onToggle={() => setShowDebug(!showDebug)} /> */}
+      <SimpleDebug isVisible={showDebug} onToggle={() => setShowDebug(!showDebug)} />
     </TooltipProvider>
   );
 };

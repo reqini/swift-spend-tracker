@@ -286,7 +286,7 @@ const Index = () => {
       </div>
 
       <div className="space-y-3 mb-4">
-        <FamilyDebug
+        {/* <FamilyDebug
           familyId={familyId}
           familyName={family?.name}
           familyMembers={familyMembers}
@@ -294,7 +294,7 @@ const Index = () => {
           familyNotifications={familyNotifications}
           currentUserId={user?.id || ''}
           isAdmin={familyMembers.find(m => m.user_id === user?.id)?.role === 'admin'}
-        />
+        /> */}
         <FamilyManagement
           familyId={familyId}
           familyName={family?.name}

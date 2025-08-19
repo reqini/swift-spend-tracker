@@ -163,7 +163,7 @@ export const useSupabaseFinance = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [loadUserFamily, loadTransactions, loadFamilyData]);
+  }, []); // Removed dependencies to prevent infinite loop
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) return null;

@@ -48,7 +48,7 @@ const FamilyDebug: React.FC<FamilyDebugProps> = ({
           <div>
             <strong>Family Members ({familyMembers?.length || 0}):</strong>
             {familyMembers?.map((member, index) => (
-              <div key={member.id} className="ml-2 text-xs">
+              <div key={`member-${member.id}-${index}`} className="ml-2 text-xs">
                 {index + 1}. ID: {member.id} | User: {member.user_id} | Role: {member.role} | Email: {member.user_email || 'N/A'}
               </div>
             ))}
@@ -57,7 +57,7 @@ const FamilyDebug: React.FC<FamilyDebugProps> = ({
           <div>
             <strong>Family Invitations ({familyInvitations?.length || 0}):</strong>
             {familyInvitations?.map((invitation, index) => (
-              <div key={invitation.id} className="ml-2 text-xs">
+              <div key={`invitation-${invitation.id}-${index}`} className="ml-2 text-xs">
                 {index + 1}. ID: {invitation.id} | Email: {invitation.invited_email} | Status: {invitation.status}
               </div>
             ))}
@@ -66,7 +66,7 @@ const FamilyDebug: React.FC<FamilyDebugProps> = ({
           <div>
             <strong>Family Notifications ({familyNotifications?.length || 0}):</strong>
             {familyNotifications?.map((notification, index) => (
-              <div key={notification.id} className="ml-2 text-xs">
+              <div key={`notification-${notification.id}-${index}`} className="ml-2 text-xs">
                 {index + 1}. ID: {notification.id} | Type: {notification.type} | Title: {notification.title}
               </div>
             ))}

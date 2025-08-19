@@ -47,16 +47,16 @@ const FamilyManagement = ({
   onNotificationRead,
   onNotificationDelete
 }: FamilyManagementProps) => {
-  // Debug logs
-  console.log('FamilyManagement Debug:', {
-    familyId,
-    familyName,
-    familyMembers: familyMembers?.length || 0,
-    familyInvitations: familyInvitations?.length || 0,
-    familyNotifications: familyNotifications?.length || 0,
-    currentUserId,
-    isAdmin
-  });
+  // Debug logs - commented out to prevent console spam
+  // console.log('FamilyManagement Debug:', {
+  //   familyId,
+  //   familyName,
+  //   familyMembers: familyMembers?.length || 0,
+  //   familyInvitations: familyInvitations?.length || 0,
+  //   familyNotifications: familyNotifications?.length || 0,
+  //   currentUserId,
+  //   isAdmin
+  // });
   const [isOpen, setIsOpen] = useState(false);
   const [createFamilyName, setCreateFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');

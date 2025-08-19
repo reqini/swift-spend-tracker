@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import DebugInfo from "./components/DebugInfo";
+import DetailedDebug from "./components/DetailedDebug";
 import SimpleFallback from "./components/SimpleFallback";
 
 const App = () => {
@@ -17,7 +17,7 @@ const App = () => {
 
   return (
     <TooltipProvider>
-      <DebugInfo />
+      <DetailedDebug />
       <Toaster />
       <Sonner />
       <BrowserRouter>
